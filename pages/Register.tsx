@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { auth } from "../lib/firebase";
+import { pattern } from "../constants/constants";
 import { handleLoginGoogle, useUser } from "../lib/auth";
 import Head from "next/head";
 import Link from "next/link";
@@ -44,8 +45,6 @@ export default function Register() {
   // パスワードリセット(forgat password)
   const sendResetEmail = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const pattern =
-      /^[a-zA-Z0-9_+-]+(\.[a-zA-Z0-9_+-]+)*@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.)+[a-zA-Z]{2,}$/;
     await sendPasswordResetEmail(auth, resetEmail)
       .then(() => {
         setMessage("送信完了しました");
@@ -93,9 +92,6 @@ export default function Register() {
       setMessage("メールアドレスが入力されていません");
       return;
     }
-    // メールアドレスの正規表現
-    const pattern =
-      /^[a-zA-Z0-9_+-]+(\.[a-zA-Z0-9_+-]+)*@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.)+[a-zA-Z]{2,}$/;
     if (!pattern.test(email)) {
       setMessage("メールアドレスに不正な値が入力されています");
       return;

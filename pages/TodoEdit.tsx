@@ -17,7 +17,6 @@ import {
   getDocs,
   query,
 } from "firebase/firestore";
-import { pid } from "process";
 
 export default function TodoEdit() {
   const [editId, setEditId] = useRecoilState(editIdState);

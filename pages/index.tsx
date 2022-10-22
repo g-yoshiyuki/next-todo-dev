@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { auth } from "../lib/firebase";
+import { pattern } from "../constants/constants";
 import { handleLoginGoogle, useUser } from "../lib/auth";
 import { NextPage } from "next";
 import Head from "next/head";
@@ -23,8 +24,6 @@ const Home: NextPage = () => {
   // auth.tsのuseUser関数を以下のuserで実行することにより、現在のユーザー情報を取得できる。
   // DisplayName,uid,email...など様々な情報が入る
   const user = useUser();
-  const pattern =
-      /^[a-zA-Z0-9_+-]+(\.[a-zA-Z0-9_+-]+)*@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.)+[a-zA-Z]{2,}$/;
 
 //  ログインするとアプリへ遷移
 // useEffectは初回レンダリング時も実行される

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { handleLogout, useUser } from "../lib/auth";
 import { useRouter } from "next/router";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import {
   todoListState,
   newTitleState,
@@ -17,8 +17,6 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  where,
-  getDocs,
   query,
   onSnapshot,
 } from "firebase/firestore";
@@ -27,10 +25,12 @@ export default function TodoApp() {
   const [todos, setTodos] = useRecoilState(todoListState);
   const [todoTitle, setTodoTitle] = useState<any>("");
   const [todoDetail, setTodoDetail] = useState<any>("");
-  const [todoId, setTodoId] = useState<any>(todos.length + 1);
-  const [editId, setEditId] = useRecoilState(editIdState);
-  const [newTitle, setNewTitle] = useRecoilState(newTitleState);
-  const [newDetail, setNewDetail] = useRecoilState(newDetailState);
+  // const [todoId, setTodoId] = useState<any>(todos.length + 1);
+  // const [docId, setDocId] = useState<any>("");
+  // セッター関数のみ使う時は、useSetRecoilStateを使う
+  const setEditId = useSetRecoilState(editIdState);
+  const setNewTitle = useSetRecoilState(newTitleState);
+  const setNewDetail = useSetRecoilState(newDetailState);
   const [filter, setFilter] = useState<any>("selected");
   const [filteredTodos, setFilteredTodos] = useState<any>([]);
   const [deadline, setDeadline] = useState<any>("なし");
@@ -74,17 +74,38 @@ export default function TodoApp() {
   // ここから追記コード
   // ログインしたユーザーが作成したtodoのみを表示
   const userByTodos = todos.filter((todo: any) => todo.username === username);
+
+  // firestoreのdocument.idを取得する関数
+  // const getDocId = async () => {
+  //   const documentId: any = [];
+  //   const todoCollectionRef = collection(db, "todos");
+  //   const querySnapshot = await getDocs(todoCollectionRef);
+  //   querySnapshot.forEach(async (document) => {
+  //     const data = document.data();
+  //     //準備しておいた配列に取り出したデータをpushします
+  //     documentId.push({
+  //       authorName: data.authorName,
+  //       content: data.content,
+  //       createdAt: data.createdAt,
+  //       title: data.title,
+  //       id: document.id,
+  //     });
+  //     console.log(documentId);
+  //   });
+  //   // setDocId(documentId);
+  // };
+
   // todo作成
   const handleAddTodo = () => {
     addDoc(collection(db, "todos"), {
-      id: todoId,
+      // id: todoId,
       title: todoTitle,
       detail: todoDetail,
       status: "notStarted",
       deadline: deadline,
       username: user!.displayName,
     });
-    setTodoId(todoId + 1);
+    // setTodoId(todoId + 1);
     setTodoTitle("");
     setTodoDetail("");
     setDeadline("なし");
@@ -93,36 +114,36 @@ export default function TodoApp() {
   // 引数のidは削除ボタンを押したときに取得するtodo.id。
   // クエリーの検索条件をwhereで指定
   // dbから削除することで、下記のuseEffectでsetTodosに新しいデータが格納される。さらにtodoが変更されることでuseEffectのfilteringTodosが走り、新しくフィルタリングされたtodoが表示される。
+
+  // documentのidがわからない場合に任意のdocumentを取得する方法
+  // const deleteTodo = async (id: any) => {
+  // const todoCollectionRef = collection(db, "todos");
+  //   const q = query(todoCollectionRef, where("id", "==", id));
+  //   const querySnapshot = await getDocs(q);
+  //   querySnapshot.forEach(async (document) => {
+  //     const todoDocumentRef = doc(db, "todos", document.id);
+  //     await deleteDoc(todoDocumentRef);
+  //   });
+  // };
+
+  // documentのidが分かる場合に任意のdocumentを取得する方法
+  // docの第3引数にdocumentのidを指定することで取得できる。
+  // 上記のコメントアウトの関数内で使用しているuseStateのidでは取得できない。
   const deleteTodo = async (id: any) => {
-    const todoCollectionRef = collection(db, "todos");
-    const q = query(todoCollectionRef, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach(async (document) => {
-      const todoDocumentRef = doc(db, "todos", document.id);
-      await deleteDoc(todoDocumentRef);
-    });
+    const todoDocumentRef = doc(db, "todos", id);
+    await deleteDoc(todoDocumentRef);
   };
   // ステータス変更
   const handleStatusChange = async (id: string, e: any) => {
     const newStatus = e.target.value;
-    const todoCollectionRef = collection(db, "todos");
-    const q = query(todoCollectionRef, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach(async (document) => {
-      const todoDocumentRef = doc(db, "todos", document.id);
-      await updateDoc(todoDocumentRef, { status: newStatus });
-    });
+    const todoDocumentRef = doc(db, "todos", id);
+    await updateDoc(todoDocumentRef, { status: newStatus });
   };
   // 期限変更
   const deadlineChange = async (id: string, e: any) => {
     const newDeadline = e.target.value;
-    const todoCollectionRef = collection(db, "todos");
-    const q = query(todoCollectionRef, where("id", "==", id));
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach(async (document) => {
-      const todoDocumentRef = doc(db, "todos", document.id);
-      await updateDoc(todoDocumentRef, { deadline: newDeadline });
-    });
+    const todoDocumentRef = doc(db, "todos", id);
+    await updateDoc(todoDocumentRef, { deadline: newDeadline });
   };
 
   useEffect(() => {
@@ -132,7 +153,10 @@ export default function TodoApp() {
       setTodos(
         // snapshot.docsで、postsの中にあるドキュメントをすべて取得
         snapshot.docs.map((doc) => ({
-          id: doc.data().id,
+          // id: doc.data().id,
+          // doc.idでdocumentに付与されている自動生成されたidを取得できる
+          // key: doc.id,
+          id: doc.id,
           title: doc.data().title,
           detail: doc.data().detail,
           status: doc.data().status,
@@ -312,7 +336,8 @@ export default function TodoApp() {
                   onChange={(e) => handleStatusChange(todo.id, e)}
                 >
                   {StatusOptions.map((StatusOption: any) => (
-                    <option key={StatusOption} value={StatusOption.value}>
+                    // .valueをつけないとオブジェクトが入ってコンソールエラーになる
+                    <option key={StatusOption.value} value={StatusOption.value}>
                       {StatusOption.text}
                     </option>
                   ))}

@@ -6,11 +6,7 @@ import { useRouter } from "next/router";
 import { db } from "../../lib/firebase";
 import {
   doc,
-  collection,
-  updateDoc,
-  where,
-  getDocs,
-  query,
+  updateDoc
 } from "firebase/firestore";
 
 export default function TodoEdit() {
@@ -44,14 +40,8 @@ export default function TodoEdit() {
 
   // タイトル編集を保存
   const handleEditTodo = async () => {
-    // const newDeadline = e.target.value
-    const todoCollectionRef = collection(db, "todos");
-    const q = query(todoCollectionRef, where("id", "==", editId));
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach(async (document) => {
-      const todoDocumentRef = doc(db, "todos", document.id);
-      await updateDoc(todoDocumentRef, { title: newTitle, detail: newDetail });
-    });
+    const todoDocumentRef = doc(db, "todos", editId);
+    await updateDoc(todoDocumentRef, { title: newTitle, detail: newDetail });
     setNewTitle("");
     setNewDetail("");
     handleCloseEditForm();
